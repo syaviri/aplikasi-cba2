@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belajar Algoritma & Pemrograman</title>
+    <!-- Memuat Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Memuat Font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Memuat ikon (Heroicons) -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/heroicons@2.1.3/24/outline/index.js"></script>
+    
+    <!-- Gaya CSS Kustom -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent; /* Mencegah flash biru saat disentuh di mobile */
+        }
+        /* Menyembunyikan scrollbar untuk tampilan bersih */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* --- Gaya Kustom untuk Game Lightbot --- */
+        #lightbot-grid {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-cols, 5), 1fr);
+            grid-template-rows: repeat(var(--grid-rows, 5), 1fr);
+            aspect-ratio: 1 / 1;
+            max-width: 400px;
+            width: 90vw;
+            margin: 20px auto;
+            border: 2px solid #4b5563; /* gray-600 */
+            border-radius: 8px;
+            background-color: #374151; /* gray-700 */
+            position: relative;
+        }
+        .grid-cell {
+            border: 1px solid #4b5563; /* gray-600 */
+            position: relative;
+        }
+        .wall {
+            background-color: #1f2937; /* gray-800 */
+            border: 2px solid #111827; /* gray-900 */
+        }
+        .target {
+            background-color: #3b82f6; /* blue-500 */
+            box-shadow: 0 0 10px #3b82f6;
+        }
+        .target.lit {
+            background-color: #fde047; /* yellow-300 */
+            box-shadow: 0 0 15px #fde047;
+        }
+        #robot {
+            position: absolute;
+            width: calc(100% / var(--grid-cols, 5));
+            height: calc(100% / var(--grid-rows, 5));
+            background-color: #f87171; /* red-400 */
+            border: 2px solid #991b1b; /* red-800 */
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            /* Ikon robot (panah) */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            font-weight: bold;
+        }
+        #robot::before {
+            content: '▲';
+        }
+
+        /* --- Gaya Kustom untuk Rapor (Mode Cetak) --- */
+        @media print {
+            body {
+                background-color: white;
+                color: black;
+            }
+            /* Sembunyikan semua elemen kecuali area rapor */
+            body * {
+                visibility: hidden;
+            }
+            #rapor-print-area, #rapor-print-area * {
+                visibility: visible;
+            }
+            #rapor-print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: 2px solid black;
+                padding: 20px;
+            }
+            /* Hapus bayangan dan warna latar belakang pada mode cetak */
+            .print\:no-bg { background-color: transparent !important; }
+            .print\:text-black { color: black !important; }
+            .print\:border-black { border-color: black !important; }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen">
+
+    <!-- ===== HALAMAN LOGIN (DEFAULT) ===== -->
+    <div id="login-page" class="flex flex-col items-center justify-center min-h-screen p-6">
+        <div class="w-full max-w-sm p-8 bg-gray-800 rounded-2xl shadow-xl">
+            <h1 class="text-3xl font-bold text-center text-cyan-400 mb-2">Selamat Datang!</h1>
+            <p class="text-center text-gray-300 mb-6">Aplikasi Belajar Algoritma</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="nama" class="block text-sm font-medium text-gray-300 mb-1">Nama Lengkap</label>
+                    <input type="text" id="nama" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                </div>
+                <div>
+                    <label for="kelas" class="block text-sm font-medium text-gray-300 mb-1">Kelas</label>
+                    <select id="kelas" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                        <option value="">-- Pilih Kelas --</option>
+                        <option value="7A">7A</option>
+                        <option value="7B">7B</option>
+                        <option value="7C">7C</option>
+                        <option value="8A">8A</option>
+                        <option value="8B">8B</option>
+                        <option value="8C">8C</option>
+                        <option value="9A">9A</option>
+                        <option value="9B">9B</option>
+                        <option value="9C">9C</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="peran" class="block text-sm font-medium text-gray-300 mb-1">Saya adalah</label>
+                    <select id="peran" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                        <option value="">-- Pilih Peran --</option>
+                        <option value="Murid">Murid</option>
+                        <option value="Guru">Guru</option>
+                    </select>
+                </div>
+                <div id="nama-ortu-container">
+                    <label for="nama-ortu" class="block text-sm font-medium text-gray-300 mb-1">Nama Orang Tua/Wali</label>
+                    <input type="text" id="nama-ortu" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                </div>
+            </div>
+
+            <button id="login-button" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-4 rounded-lg mt-8 transition duration-300 transform active:scale-95">
+                Masuk
+            </button>
+            <p id="login-error" class="text-red-400 text-center text-sm mt-4 hidden">Harap isi semua kolom yang wajib diisi!</p>
+        </div>
+    </div>
+
+    <!-- ===== HALAMAN UTAMA (TERSEMBUNYI) ===== -->
+    <div id="main-page" class="hidden min-h-screen flex flex-col">
+        <!-- Header Utama -->
+        <header class="bg-gray-800 p-4 shadow-lg sticky top-0 z-50">
+            <div class="container mx-auto max-w-4xl flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-cyan-400" id="user-greeting"></h1>
+                    <p class="text-sm text-gray-300" id="user-class-role"></p>
+                    <p class="text-xs text-gray-400" id="current-time"></p>
+                </div>
+                <button id="logout-button" class="bg-red-500 hover:bg-red-600 text-white text-sm font-medium py-2 px-3 rounded-lg transition duration-300 active:scale-95">
+                    Keluar
+                </button>
+            </div>
+        </header>
+
+        <!-- Konten Halaman (Dinamis) -->
+        <main class="flex-grow container mx-auto max-w-4xl p-4">
+            
+            <!-- 1. DASHBOARD (MENU UTAMA) -->
+            <div id="page-dashboard" class="page-content">
+                <h2 class="text-2xl font-bold mb-6 text-gray-100">Menu Utama</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <!-- Tombol Navigasi -->
+                    <button data-page="page-materi" class="nav-button bg-gray-800 p-5 rounded-xl shadow-lg hover:bg-gray-700 transition duration-300 active:scale-95">
+                        <span class="text-5xl mb-2">📚</span>
+                        <span class="font-semibold text-base">Materi Belajar</span>
+                    </button>
+                    <button data-page="page-lightbot" class="nav-button bg-gray-800 p-5 rounded-xl shadow-lg hover:bg-gray-700 transition duration-300 active:scale-95">
+                        <span class="text-5xl mb-2">🤖</span>
+                        <span class="font-semibold text-base">Simulasi Robot</span>
+                    </button>
+                    <button data-page="page-latihan" class="nav-button bg-gray-800 p-5 rounded-xl shadow-lg hover:bg-gray-700 transition duration-300 active:scale-95">
+                        <span class="text-5xl mb-2">💻</span>
+                        <span class="font-semibold text-base">Latihan Kode</span>
+                    </button>
+                    <button data-page="page-kuis" class="nav-button bg-gray-800 p-5 rounded-xl shadow-lg hover:bg-gray-700 transition duration-300 active:scale-95">
+                        <span class="text-5xl mb-2">❓</span>
+                        <span class="font-semibold text-base">Kuis Pemahaman</span>
+                    </button>
+                    <button data-page="page-rapor" class="nav-button bg-gray-800 p-5 rounded-xl shadow-lg hover:bg-gray-700 transition duration-300 active:scale-95">
+                        <span class="text-5xl mb-2">📜</span>
+                        <span class="font-semibold text-base">Rapor Mini Saya</span>
+                    </button>
+                    <!-- Tombol Panel Guru (Khusus Guru) -->
+                    <button id="guru-panel-button" data-page="page-guru" class="nav-button bg-cyan-800 p-5 rounded-xl shadow-lg hover:bg-cyan-700 transition duration-300 active:scale-95 hidden">
+                        <span class="text-5xl mb-2">🧑‍🏫</span>
+                        <span class="font-semibold text-base">Panel Guru</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. HALAMAN MATERI -->
+            <div id="page-materi" class="page-content hidden">
+                <button class="back-button mb-4 text-cyan-400 hover:text-cyan-300">&larr; Kembali ke Menu</button>
+                <h2 class="text-2xl font-bold mb-6 text-gray-100">Materi Belajar</h2>
+                
+                <!-- Materi 1: Algoritma -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+                    <h3 class="text-xl font-bold text-cyan-400 mb-3">1. Apa itu Algoritma?</h3>
+                    <p class="text-gray-300 mb-4">
+                        Algoritma adalah **urutan langkah-langkah logis** untuk menyelesaikan suatu masalah. Pikirkan algoritma seperti resep masakan!
+                    </p>
+                    <div class="bg-gray-700 p-4 rounded-md">
+                        <p class="font-semibold mb-2">Contoh: Algoritma Membuat Mie Instan</p>
+                        <ol class="list-decimal list-inside text-gray-300 space-y-1">
+                            <li>Rebus air hingga mendidih.</li>
+                            <li>Masukkan mie ke dalam air mendidih.</li>
+                            <li>Sambil menunggu, tuang bumbu ke dalam mangkuk.</li>
+                            <li>Tiriskan mie dan masukkan ke mangkuk.</li>
+                            <li>Aduk rata dan mie siap dimakan.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Materi 2: Pemrograman -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+                    <h3 class="text-xl font-bold text-cyan-400 mb-3">2. Apa itu Pemrograman?</h3>
+                    <p class="text-gray-300 mb-4">
+                        Pemrograman adalah proses menulis instruksi (algoritma) dalam bahasa yang dimengerti oleh komputer (disebut <strong>Bahasa Pemrograman</strong>) agar komputer bisa melakukan tugas yang kita inginkan.
+                    </p>
+                    <p class="text-gray-300">Kita akan belajar menggunakan <strong>Blok Program</strong>, yang mirip seperti menyusun puzzle!</p>
+                </div>
+
+                <!-- Materi 3: Video Penjelasan -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+                    <h3 class="text-xl font-bold text-cyan-400 mb-3">3. Tonton Video Ini!</h3>
+                    <p class="text-gray-300 mb-4">Tonton video di bawah ini untuk memahami lebih lanjut tentang apa itu algoritma dan berpikir komputasional.</p>
+                    <div class="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden">
+                        <!-- Video Embed (Contoh) -->
+                        <iframe src="https://www.youtube.com/embed/KIv_n32j1sY" 
+                                title="YouTube video player" frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen
+                                class="w-full h-full">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. HALAMAN SIMULASI LIGHTBOT -->
+            <div id="page-lightbot" class="page-content hidden">
+                <button class="back-button mb-4 text-cyan-400 hover:text-cyan-300">&larr; Kembali ke Menu</button>
+                <h2 class="text-2xl font-bold mb-1 text-gray-100">Simulasi Robot (Mirip Lightbot)</h2>
+                <p class="text-gray-400 mb-4">Susun perintah untuk menyalakan kotak biru!</p>
+                <h3 id="lightbot-level-title" class="text-xl font-semibold text-cyan-400 text-center">Level 1</h3>
+
+                <!-- Area Game -->
+                <div id="lightbot-grid" style="--grid-cols: 5; --grid-rows: 5;">
+                    <!-- Sel grid akan di-generate oleh JS -->
+                    <div id="robot" style="--grid-cols: 5; --grid-rows: 5;"></div>
+                </div>
+
+                <!-- Area Antrian Perintah -->
+                <div class="bg-gray-800 p-4 rounded-lg shadow-inner min-h-[60px] mb-4">
+                    <h4 class="font-semibold mb-2">Antrian Perintah:</h4>
+                    <div id="command-queue" class="flex flex-wrap gap-2">
+                        <!-- Perintah akan muncul di sini -->
+                    </div>
+                </div>
+
+                <!-- Tombol Kontrol Perintah -->
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <button id="cmd-maju" class="lightbot-cmd bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg active:scale-95">Maju</button>
+                    <button id="cmd-kiri" class="lightbot-cmd bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg active:scale-95">Kiri ↺</button>
+                    <button id="cmd-kanan" class="lightbot-cmd bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg active:scale-95">Kanan ↻</button>
+                    <button id="cmd-lampu" class="lightbot-cmd bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg active:scale-95">Lampu</button>
+                </div>
+                
+                <!-- Tombol Eksekusi -->
+                <div class="grid grid-cols-2 gap-3 mt-6">
+                    <button id="run-button" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 active:scale-95">
+                        Jalankan
+                    </button>
+                    <button id="reset-button" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg transition duration-300 active:scale-95">
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4. HALAMAN LATIHAN KODE (Tautan Eksternal) -->
+            <div id="page-latihan" class="page-content hidden">
+                <button class="back-button mb-4 text-cyan-400 hover:text-cyan-300">&larr; Kembali ke Menu</button>
+                <h2 class="text-2xl font-bold mb-6 text-gray-100">Latihan Kode Eksternal</h2>
+                <p class="text-gray-300 mb-6">Coba platform-platform hebat ini untuk melatih logika dan pemrograman blok. Buka di tab baru!</p>
+                
+                <div class="space-y-4">
+                    <a href="https://blockly.games/" target="_blank" rel="noopener noreferrer" class="block bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition duration-300">
+                        <h3 class="text-xl font-bold text-green-400 mb-1">Blockly Games</h3>
+                        <p class="text-gray-300">Belajar program dengan puzzle blok. Mulai dari yang paling mudah!</p>
+                    </a>
+                    <a href="https://code.org/hourofcode/overview" target="_blank" rel="noopener noreferrer" class="block bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition duration-300">
+                        <h3 class="text-xl font-bold text-purple-400 mb-1">Hour of Code (Code.org)</h3>
+                        <p class="text-gray-300">Banyak permainan seru (Minecraft, Star Wars, dll) untuk belajar coding.</p>
+                    </a>
+                    <a href="https://compute-it.toxicode.fr/" target="_blank" rel="noopener noreferrer" class="block bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition duration-300">
+                        <h3 class="text-xl font-bold text-yellow-400 mb-1">Compute It</h3>
+                        <p class="text-gray-300">Latihan algoritma yang lebih menantang untuk mengasah logikamu.</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 5. HALAMAN KUIS -->
+            <div id="page-kuis" class="page-content hidden">
+                <button class="back-button mb-4 text-cyan-400 hover:text-cyan-300">&larr; Kembali ke Menu</button>
+                <h2 class="text-2xl font-bold mb-6 text-gray-100">Kuis Pemahaman</h2>
+                
+                <div id="kuis-container" class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <!-- Pertanyaan Kuis akan di-generate oleh JS -->
+                </div>
+                
+                <button id="kuis-submit-button" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-4 rounded-lg mt-6 transition duration-300 active:scale-95">
+                    Kirim Jawaban
+                </button>
+            </div>
+
+            <!-- 6. HALAMAN RAPOR MINI (MURID) -->
+            <div id="page-rapor" class="page-content hidden">
+                <button class="back-button mb-4 text-cyan-400 hover:text-cyan-300">&larr; Kembali ke Menu</button>
+                
+                <!-- Area Rapor yang Bisa Dicetak -->
+                <div id="rapor-print-area" class="bg-gray-800 p-6 rounded-lg shadow-lg print:no-bg print:border-black print:text-black">
+                    <h2 class="text-2xl font-bold mb-6 text-center text-cyan-400 print:text-black">Rapor Mini Belajar Mandiri</h2>
+                    
+                    <!-- Info Murid -->
+                    <div class="mb-6 border-b border-gray-600 print:border-black pb-4">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-semibold">Nama:</span>
+                            <span id="rapor-nama" class="text-right"></span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-semibold">Kelas:</span>
+                            <span id="rapor-kelas" class="text-right"></span>
+                        </div>
+                    </div>
+
+                    <!-- Progres Belajar -->
+                    <div class="mb-6 border-b border-gray-600 print:border-black pb-4">
+                        <h3 class="text-lg font-semibold mb-3">Progres Belajar</h3>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-semibold">Skor Kuis:</span>
+                            <span id="rapor-skor" class="text-right"></span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-semibold">Level Robot:</span>
+                            <span id="rapor-level" class="text-right"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback Guru -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold mb-3">Feedback & Nilai</h3>
+                        <p class="text-gray-300 mb-2 print:text-black"><strong>Feedback:</strong> <span id="rapor-feedback"></span></p>
+                        <p class="text-gray-300 print:text-black"><strong>Nilai Tugas Akhir:</strong> <span id="rapor-nilai" class="font-bold text-xl"></span></p>
+                    </div>
+
+                    <!-- Tanda Tangan -->
+                    <div class="mt-10 grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <p class="mb-16">Paraf Murid</p>
+                            <p class="border-t border-gray-500 print:border-black pt-1" id="rapor-ttd-nama"></p>
+                        </div>
+                        <div id="rapor-paraf-ortu-container">
+                            <p class="mb-16">Paraf Orang Tua</p>
+                            <p class="border-t border-gray-500 print:border-black pt-1" id="rapor-ttd-ortu">(.....................)</p>
+                        </div>
+                        <div>
+                            <p class="mb-16">Paraf Guru</p>
+                            <p class="border-t border-gray-500 print:border-black pt-1">(Ananda Putri Syaviri, S.Pd)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="print-rapor-button" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg mt-6 transition duration-300 active:scale-95">
+                    Download Rapor (Simpan/Cetak PDF)
+                </button>
+            </div>
+
+            <!-- 7. HALAMAN PANEL GURU (KHUSUS GURU) -->
+            <div id="page-guru" class="page-content hidden">
+                <button class="back-button mb-4 text-cyan-400 hover:text-cyan-300">&larr; Kembali ke Menu</button>
+                <h2 class="text-2xl font-bold mb-6 text-gray-100">Panel Monitoring Guru</h2>
+
+                <!-- Bagian 1: Monitoring Siswa -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+                    <h3 class="text-xl font-bold text-cyan-400 mb-4">Aktivitas Murid</h3>
+                    <p class="text-sm text-gray-400 mb-4">Pilih murid untuk melihat progres dan memberi nilai/feedback.</p>
+                    
+                    <select id="guru-student-select" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white mb-4">
+                        <option value="">-- Pilih Murid --</option>
+                    </select>
+
+                    <!-- Info Murid Terpilih -->
+                    <div id="guru-student-details" class="hidden bg-gray-700 p-4 rounded-md">
+                        <p class="mb-2"><strong>Skor Kuis:</strong> <span id="detail-skor"></span></p>
+                        <p class="mb-4"><strong>Level Robot:</strong> <span id="detail-level"></span></p>
+
+                        <label for="guru-feedback" class="block text-sm font-medium text-gray-300 mb-1">Beri Feedback:</label>
+                        <textarea id="guru-feedback" rows="3" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-white placeholder-gray-400"></textarea>
+                        
+                        <label for="guru-nilai" class="block text-sm font-medium text-gray-300 mb-1 mt-3">Beri Nilai (0-100):</label>
+                        <input type="number" id="guru-nilai" min="0" max="100" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-white">
+
+                        <button id="guru-submit-feedback" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg mt-4">
+                            Simpan Feedback & Nilai
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bagian 2: Manajemen Pengguna -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-bold text-red-400 mb-4">Manajemen Pengguna</h3>
+                    <p class="text-sm text-gray-400 mb-4">Hapus riwayat pengguna (Murid/Guru) atau data yang salah.</p>
+                    <div id="guru-user-list" class="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
+                        <!-- Daftar pengguna akan di-generate oleh JS -->
+                    </div>
+                </div>
+            </div>
+
+        </main>
+        
+        <!-- Footer -->
+        <footer class="text-center p-4 text-gray-500 text-xs mt-8">
+            Dibuat dengan Gemini & Ananda Putri Syaviri
+        </footer>
+    </div>
+
+
+    <!-- ===== MODAL UNIVERSAL (Pesan Error, Sukses, Konfirmasi) ===== -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
+        <div id="modal-box" class="bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-sm">
+            <h3 id="modal-title" class="text-xl font-bold text-center mb-4"></h3>
+            <p id="modal-message" class="text-gray-300 text-center mb-6"></p>
+            <div id="modal-buttons" class="flex gap-3">
+                <!-- Tombol OK (Default) -->
+                <button id="modal-ok-button" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg">
+                    OK
+                </button>
+                <!-- Tombol Konfirmasi (Opsional) -->
+                <button id="modal-confirm-button" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg hidden">
+                    Ya, Hapus
+                </button>
+                <button id="modal-cancel-button" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hidden">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== SCRIPT UTAMA ===== -->
+    
+    <!-- Impor Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            onAuthStateChanged,
+            signInWithCustomToken
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            getDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            collection, 
+            query, 
+            serverTimestamp,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Konfigurasi Firebase ---
+        // Variabel global __firebase_config dan __app_id akan disediakan oleh lingkungan Canvas
+        let firebaseConfig, appId, db, auth;
+        
+        try {
+            firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            
+            // Inisialisasi Firebase
+            if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('Debug'); // Aktifkan log untuk debugging
+                console.log("Firebase Berhasil Diinisialisasi.");
+            } else {
+                console.error("Konfigurasi Firebase tidak ditemukan.");
+                showModal("Error", "Gagal terhubung ke database. Harap refresh halaman.");
+            }
+        } catch (error) {
+            console.error("Error parsing Firebase config:", error);
+            showModal("Error", "Konfigurasi database error.");
+        }
+
+        // --- Variabel Global State Aplikasi ---
+        let currentUser = null; // { uid, nama, kelas, peran }
+        let currentUserId = null; // Menyimpan ID user yang sedang login
+        let userActivityUnsubscribe = null; // Untuk listener rapor murid
+        let allUsersUnsubscribe = null; // Untuk listener panel guru
+
+
+        // --- Selektor DOM ---
+        const loginPage = document.getElementById('login-page');
+        const mainPage = document.getElementById('main-page');
+        const loginButton = document.getElementById('login-button');
+        const loginError = document.getElementById('login-error');
+        const logoutButton = document.getElementById('logout-button');
+        const clockElement = document.getElementById('current-time');
+        const guruPanelButton = document.getElementById('guru-panel-button');
+        
+        // Modal selectors
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalBox = document.getElementById('modal-box');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalOkButton = document.getElementById('modal-ok-button');
+        const modalConfirmButton = document.getElementById('modal-confirm-button');
+        const modalCancelButton = document.getElementById('modal-cancel-button');
+        
+        // Listener untuk peran -> sembunyikan/tampilkan input Ortu
+        const peranSelect = document.getElementById('peran');
+        const ortuFieldContainer = document.getElementById('nama-ortu-container');
+        
+        peranSelect.addEventListener('change', () => {
+            const ortuInput = document.getElementById('nama-ortu');
+            if (peranSelect.value === 'Guru') {
+                ortuFieldContainer.classList.add('opacity-50', 'pointer-events-none');
+                ortuInput.value = 'N/A'; // Isi default
+            } else {
+                ortuFieldContainer.classList.remove('opacity-50', 'pointer-events-none');
+                if (ortuInput.value === 'N/A') {
+                    ortuInput.value = ''; // Kosongkan
+                }
+            }
+        });
+
+
+        // --- Fungsi Helper (Modal & Navigasi) ---
+
+        /**
+         * Menampilkan modal universal
+         * @param {string} title Judul modal
+         * @param {string} message Isi pesan modal
+         * @param {string} type 'alert' (default) atau 'confirm'
+         * @param {function} onConfirm Callback jika tombol konfirmasi ditekan
+         */
+        function showModal(title, message, type = 'alert', onConfirm = null) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+
+            if (type === 'confirm') {
+                modalOkButton.classList.add('hidden');
+                modalConfirmButton.classList.remove('hidden');
+                modalCancelButton.classList.remove('hidden');
+                
+                // Hapus listener lama sebelum menambah yang baru
+                const newConfirmBtn = modalConfirmButton.cloneNode(true);
+                modalConfirmButton.parentNode.replaceChild(newConfirmBtn, modalConfirmButton);
+                modalConfirmButton = newConfirmBtn; // Update referensi
+                
+                modalConfirmButton.addEventListener('click', () => {
+                    if (onConfirm) onConfirm();
+                    hideModal();
+                });
+
+            } else { // type === 'alert'
+                modalOkButton.classList.remove('hidden');
+                modalConfirmButton.classList.add('hidden');
+                modalCancelButton.classList.add('hidden');
+            }
+            modalBackdrop.classList.remove('hidden');
+        }
+
+        function hideModal() {
+            modalBackdrop.classList.add('hidden');
+        }
+        modalOkButton.addEventListener('click', hideModal);
+        modalCancelButton.addEventListener('click', hideModal);
+
+
+        /**
+         * Menampilkan halaman yang dipilih dan menyembunyikan yang lain
+         * @param {string} pageId ID dari elemen halaman (e.g., 'page-dashboard')
+         */
+        function showPage(pageId) {
+            // Jika belum login, paksa kembali ke halaman login
+            if (!currentUser && pageId !== 'login-page') {
+                showPage('login-page'); // 'login-page' tidak ada, jadi ini akan ke `loginPage`
+                return;
+            }
+
+            if (pageId === 'login-page') {
+                loginPage.classList.remove('hidden');
+                mainPage.classList.add('hidden');
+            } else {
+                loginPage.classList.add('hidden');
+                mainPage.classList.remove('hidden');
+
+                // Sembunyikan semua konten halaman di dalam mainPage
+                document.querySelectorAll('.page-content').forEach(page => {
+                    page.classList.add('hidden');
+                });
+
+                // Tampilkan halaman yang diminta
+                const activePage = document.getElementById(pageId);
+                if (activePage) {
+                    activePage.classList.remove('hidden');
+                    
+                    // Muat data khusus saat halaman dibuka
+                    if (pageId === 'page-rapor') loadRapor();
+                    if (pageId === 'page-guru') loadGuruPanel();
+                    if (pageId === 'page-kuis') initKuis();
+                    if (pageId === 'page-lightbot') initLightbot(currentLightbotLevel);
+
+                } else {
+                    // Fallback ke dashboard jika halaman tidak ditemukan
+                    document.getElementById('page-dashboard').classList.remove('hidden');
+                }
+            }
+            window.scrollTo(0, 0); // Scroll ke atas setiap pindah halaman
+        }
+
+        // Listener untuk tombol navigasi menu utama
+        document.querySelectorAll('.nav-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const pageId = button.getAttribute('data-page');
+                showPage(pageId);
+            });
+        });
+
+        // Listener untuk tombol "Kembali"
+        document.querySelectorAll('.back-button').forEach(button => {
+            button.addEventListener('click', () => showPage('page-dashboard'));
+        });
+
+
+        // --- Logika Inti Aplikasi ---
+
+        // 1. Update Jam Real-time
+        function updateClock() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            clockElement.textContent = now.toLocaleDateString('id-ID', options);
+        }
+        setInterval(updateClock, 1000);
+
+        // 2. Logika Login & Autentikasi
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Pengguna sudah login
+                currentUserId = user.uid;
+                console.log("Auth State Changed, User ID:", currentUserId);
+                // Coba ambil data pengguna dari Firestore
+                loadUserData(currentUserId);
+            } else {
+                // Pengguna belum login
+                console.log("Auth State Changed: No User.");
+                // Jika auth gagal total, tampilkan login page
+                showPage('login-page');
+            }
+        });
+
+        loginButton.addEventListener('click', handleLogin);
+        logoutButton.addEventListener('click', handleLogout);
+
+        async function handleLogin() {
+            const nama = document.getElementById('nama').value.trim();
+            const kelas = document.getElementById('kelas').value;
+            const peran = document.getElementById('peran').value;
+            const namaOrtu = document.getElementById('nama-ortu').value.trim();
+
+            // Validasi: Nama, Kelas, Peran Wajib
+            if (!nama || !kelas || !peran) {
+                loginError.textContent = "Nama, Kelas, dan Peran harus diisi!";
+                loginError.classList.remove('hidden');
+                return;
+            }
+            
+            // Validasi: Ortu Wajib, *KECUALI* untuk 'Guru'
+            if (peran === 'Murid' && !namaOrtu) {
+                loginError.textContent = "Semua kolom harus diisi!";
+                loginError.classList.remove('hidden');
+                return;
+            }
+            
+            // Jika Guru, pastikan namaOrtu diisi N/A jika kosong
+            let finalNamaOrtu = namaOrtu;
+            if (peran === 'Guru' && !namaOrtu) {
+                finalNamaOrtu = 'N/A';
+            }
+            
+            loginError.classList.add('hidden');
+
+            if (!currentUserId) {
+                // Ini tidak seharusnya terjadi, tapi sebagai pengaman
+                showModal("Error", "Gagal mendapatkan ID pengguna. Harap refresh halaman.");
+                return;
+            }
+
+            try {
+                // HAPUS: Login secara anonim (sudah dilakukan saat init)
+                // const userCredential = await signInAnonymously(auth);
+                // const user = userCredential.user;
+                // currentUserId = user.uid;
+
+                // Simpan data ke Firestore
+                const userData = {
+                    uid: currentUserId, // Gunakan ID pengguna yang sudah ada
+                    nama: nama,
+                    kelas: kelas,
+                    peran: peran,
+                    namaOrtu: finalNamaOrtu, // Gunakan nama ortu yg sudah difinalisasi
+                    waktuLogin: serverTimestamp(),
+                    quizScore: null,
+                    lightbotLevel: 0,
+                    feedback: "",
+                    nilai: null
+                };
+                
+                const userRef = doc(db, `artifacts/${appId}/public/data/belajar_algo_users`, currentUserId); // Gunakan ID yang sudah ada
+                await setDoc(userRef, userData, { merge: true }); // Merge true untuk jaga data lama jika ada
+
+                console.log("Login berhasil, data disimpan.");
+                // Set state global dan tampilkan halaman utama
+                setupAppForUser(userData);
+
+            } catch (error) {
+                console.error("Error saat login (setDoc):", error);
+                showModal("Login Gagal", "Terjadi kesalahan saat menyimpan data Anda. Silakan coba lagi.");
+            }
+        }
+
+        async function loadUserData(uid) {
+            try {
+                const userRef = doc(db, `artifacts/${appId}/public/data/belajar_algo_users`, uid);
+                const docSnap = await getDoc(userRef);
+
+                if (docSnap.exists()) {
+                    // Pengguna ini sudah ada datanya (misal: refresh halaman)
+                    console.log("User data loaded from Firestore.");
+                    setupAppForUser(docSnap.data());
+                } else {
+                    // Pengguna terautentikasi (anonymous) tapi belum punya data di Firestore
+                    // Ini berarti dia harus login (isi nama, dll)
+                    console.log("User authenticated but no data. Forcing login page.");
+                    showPage('login-page');
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+                // Jika gagal load (mungkin izin), tampilkan login page
+                showPage('login-page');
+            }
+        }
+
+        function setupAppForUser(userData) {
+            currentUser = userData;
+            document.getElementById('user-greeting').textContent = `Halo, ${currentUser.nama}!`;
+            document.getElementById('user-class-role').textContent = `${currentUser.peran} | ${currentUser.kelas}`;
+            
+            // Tampilkan tombol Panel Guru jika peran adalah 'Guru'
+            if (currentUser.peran === 'Guru') {
+                guruPanelButton.classList.remove('hidden');
+            } else {
+                guruPanelButton.classList.add('hidden');
+            }
+
+            // Mulai listener untuk rapor
+            startUserActivityListener();
+
+            // Tampilkan dashboard
+            showPage('page-dashboard');
+            updateClock();
+        }
+
+        function handleLogout() {
+            // Hentikan semua listener
+            if (userActivityUnsubscribe) userActivityUnsubscribe();
+            if (allUsersUnsubscribe) allUsersUnsubscribe();
+
+            // Hapus state global
+            currentUser = null;
+            currentUserId = null;
+            // Note: Kita tidak sign-out dari auth anonymous agar datanya tetap terikat
+            // Kita hanya kembali ke halaman login
+            
+            // Bersihkan input di login page
+            document.getElementById('nama').value = "";
+            document.getElementById('kelas').value = "";
+            document.getElementById('peran').value = "";
+            document.getElementById('nama-ortu').value = "";
+            
+            showPage('login-page');
+            console.log("User logged out (state cleared).");
+        }
+
+
+        // --- 3. Logika Simulasi Lightbot ---
+        const lightbotGridEl = document.getElementById('lightbot-grid');
+        const robotEl = document.getElementById('robot');
+        const commandQueueEl = document.getElementById('command-queue');
+        const levelTitleEl = document.getElementById('lightbot-level-title');
+        
+        let robotState = { x: 0, y: 0, dir: 0 }; // 0:N, 1:E, 2:S, 3:W
+        let commandQueue = [];
+        let isRunning = false;
+        let currentLightbotLevel = 0;
+        let levelData = {};
+
+        const levels = [
+            // Level 1: Jalan lurus
+            {
+                grid: [
+                    [0,0,0,0,2]
+                ],
+                start: { x: 0, y: 0, dir: 1 },
+                size: { cols: 5, rows: 1 }
+            },
+            // Level 2: Belok kanan
+            {
+                grid: [
+                    [0,0,0],
+                    [1,1,0],
+                    [1,1,2]
+                ],
+                start: { x: 0, y: 0, dir: 1 },
+                size: { cols: 3, rows: 3 }
+            },
+            // Level 3: Belok kiri
+            {
+                grid: [
+                    [1,1,2],
+                    [1,1,0],
+                    [0,0,0]
+                ],
+                start: { x: 0, y: 2, dir: 1 },
+                size: { cols: 3, rows: 3 }
+            },
+            // Level 4: Maju, lampu, maju
+            {
+                grid: [
+                    [0,2,0,2,0]
+                ],
+                start: { x: 0, y: 0, dir: 1 },
+                size: { cols: 5, rows: 1 }
+            }
+        ];
+
+        function initLightbot(levelIndex) {
+            if (levelIndex >= levels.length) {
+                showModal("Luar Biasa!", "Kamu telah menyelesaikan semua level simulasi robot!");
+                levelIndex = levels.length - 1;
+            }
+            
+            levelData = levels[levelIndex];
+            currentLightbotLevel = levelIndex;
+            levelTitleEl.textContent = `Level ${levelIndex + 1}`;
+
+            const { cols, rows } = levelData.size;
+            lightbotGridEl.style.setProperty('--grid-cols', cols);
+            lightbotGridEl.style.setProperty('--grid-rows', rows);
+            robotEl.style.setProperty('--grid-cols', cols);
+            robotEl.style.setProperty('--grid-rows', rows);
+
+            lightbotGridEl.innerHTML = ''; // Bersihkan grid lama
+            
+            // Buat grid
+            for(let r = 0; r < rows; r++) {
+                for(let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('grid-cell');
+                    cell.dataset.x = c;
+                    cell.dataset.y = r;
+                    
+                    const cellType = (levelData.grid[r] && levelData.grid[r][c]) ? levelData.grid[r][c] : 0;
+                    if (cellType === 1) cell.classList.add('wall');
+                    if (cellType === 2) cell.classList.add('target');
+                    
+                    lightbotGridEl.appendChild(cell);
+                }
+            }
+            
+            // Tambahkan robot
+            lightbotGridEl.appendChild(robotEl);
+            resetSimulation();
+        }
+
+        function resetSimulation() {
+            isRunning = false;
+            commandQueue = [];
+            robotState = { ...levelData.start };
+            updateCommandQueueUI();
+            updateRobotPosition();
+            
+            // Reset status lampu
+            document.querySelectorAll('.target.lit').forEach(t => t.classList.remove('lit'));
+            // Aktifkan tombol
+            document.querySelectorAll('.lightbot-cmd, #run-button, #reset-button').forEach(btn => btn.disabled = false);
+        }
+
+        function updateRobotPosition() {
+            const { x, y, dir } = robotState;
+            const { cols, rows } = levelData.size;
+            robotEl.style.left = `${(x / cols) * 100}%`;
+            robotEl.style.top = `${(y / rows) * 100}%`;
+            robotEl.style.transform = `rotate(${dir * 90}deg)`;
+        }
+
+        function updateCommandQueueUI() {
+            commandQueueEl.innerHTML = commandQueue.map(cmd => {
+                let icon = '';
+                if (cmd === 'maju') icon = '⬆️';
+                if (cmd === 'kiri') icon = '↺';
+                if (cmd === 'kanan') icon = '↻';
+                if (cmd === 'lampu') icon = '💡';
+                return `<span class="bg-gray-700 px-2 py-1 rounded text-lg">${icon}</span>`;
+            }).join('');
+        }
+
+        // Listener tombol perintah
+        document.getElementById('cmd-maju').addEventListener('click', () => addCommand('maju'));
+        document.getElementById('cmd-kiri').addEventListener('click', () => addCommand('kiri'));
+        document.getElementById('cmd-kanan').addEventListener('click', () => addCommand('kanan'));
+        document.getElementById('cmd-lampu').addEventListener('click', () => addCommand('lampu'));
+
+        function addCommand(cmd) {
+            if (isRunning) return;
+            commandQueue.push(cmd);
+            updateCommandQueueUI();
+        }
+
+        // Listener tombol eksekusi
+        document.getElementById('run-button').addEventListener('click', runSimulation);
+        document.getElementById('reset-button').addEventListener('click', resetSimulation);
+
+        function runSimulation() {
+            if (isRunning || commandQueue.length === 0) return;
+            isRunning = true;
+            document.querySelectorAll('.lightbot-cmd, #run-button').forEach(btn => btn.disabled = true);
+
+            const commands = [...commandQueue];
+            executeStep(commands);
+        }
+
+        function executeStep(commands) {
+            if (commands.length === 0) {
+                // Selesai eksekusi
+                isRunning = false;
+                document.getElementById('run-button').disabled = false;
+                checkWinCondition();
+                return;
+            }
+
+            const cmd = commands.shift();
+            let moveOk = true;
+
+            switch(cmd) {
+                case 'maju':
+                    let { newX, newY } = getNextPosition();
+                    if (isWall(newX, newY)) {
+                        moveOk = false;
+                        console.log("Menabrak tembok!");
+                    } else {
+                        robotState.x = newX;
+                        robotState.y = newY;
+                    }
+                    break;
+                case 'kiri':
+                    robotState.dir = (robotState.dir + 3) % 4; // 0->3, 1->0, 2->1, 3->2
+                    break;
+                case 'kanan':
+                    robotState.dir = (robotState.dir + 1) % 4; // 0->1, 1->2, 2->3, 3->0
+                    break;
+                case 'lampu':
+                    lightUp();
+                    break;
+            }
+
+            updateRobotPosition();
+
+            setTimeout(() => {
+                executeStep(commands);
+            }, 400); // Jeda 400ms antar langkah
+        }
+
+        function getNextPosition() {
+            let { x, y, dir } = robotState;
+            if (dir === 0) y--; // Utara
+            if (dir === 1) x++; // Timur
+            if (dir === 2) y++; // Selatan
+            if (dir === 3) x--; // Barat
+            return { newX: x, newY: y };
+        }
+
+        function isWall(x, y) {
+            const { cols, rows } = levelData.size;
+            // Cek batas grid
+            if (x < 0 || x >= cols || y < 0 || y >= rows) return true;
+            // Cek data grid
+            const cellType = (levelData.grid[y] && levelData.grid[y][x]) ? levelData.grid[y][x] : 0;
+            return cellType === 1;
+        }
+
+        function lightUp() {
+            const { x, y } = robotState;
+            const cellType = (levelData.grid[y] && levelData.grid[y][x]) ? levelData.grid[y][x] : 0;
+            if (cellType === 2) {
+                document.querySelector(`.grid-cell[data-x="${x}"][data-y="${y}"]`).classList.add('lit');
+                console.log("Lampu menyala!");
+            }
+        }
+
+        async function checkWinCondition() {
+            const targets = document.querySelectorAll('.target');
+            const litTargets = document.querySelectorAll('.target.lit');
+            
+            if (targets.length > 0 && targets.length === litTargets.length) {
+                showModal("Berhasil!", `Kamu hebat! Level ${currentLightbotLevel + 1} selesai.`);
+                // Lanjut ke level berikutnya
+                const nextLevel = currentLightbotLevel + 1;
+                
+                // Simpan progres ke Firestore
+                if (currentUser) {
+                    const userRef = doc(db, `artifacts/${appId}/public/data/belajar_algo_users`, currentUser.uid);
+                    await updateDoc(userRef, { lightbotLevel: nextLevel });
+                    console.log("Progres level disimpan.");
+                }
+                
+                // Muat level baru setelah 1 detik
+                setTimeout(() => {
+                    initLightbot(nextLevel);
+                }, 1000);
+            }
+        }
+
+
+        // --- 4. Logika Kuis ---
+        const kuisContainer = document.getElementById('kuis-container');
+        const kuisSubmitButton = document.getElementById('kuis-submit-button');
+
+        const questions = [
+            {
+                q: "Urutan langkah-langkah logis untuk menyelesaikan masalah disebut...",
+                options: ["Program", "Algoritma", "Bug", "Kode"],
+                answer: "Algoritma"
+            },
+            {
+                q: "Bahasa yang dimengerti oleh komputer disebut...",
+                options: ["Bahasa Isyarat", "Bahasa Inggris", "Bahasa Pemrograman", "Bahasa Gaul"],
+                answer: "Bahasa Pemrograman"
+            },
+            {
+                q: "Perintah 'Maju', 'Belok Kiri', 'Belok Kanan' dalam simulasi robot adalah contoh dari...",
+                options: ["Resep", "Instruksi", "Masalah", "Tujuan"],
+                answer: "Instruksi"
+            },
+            {
+                q: "Kesalahan dalam sebuah program disebut...",
+                options: ["Error / Bug", "Fitur", "Virus", "Algoritma"],
+                answer: "Error / Bug"
+            }
+        ];
+
+        function initKuis() {
+            kuisContainer.innerHTML = '';
+            questions.forEach((q, index) => {
+                const questionEl = document.createElement('div');
+                questionEl.classList.add('mb-6');
+                
+                let optionsHtml = q.options.map(opt => `
+                    <label class="block bg-gray-700 hover:bg-gray-600 p-3 rounded-lg cursor-pointer">
+                        <input type="radio" name="q${index}" value="${opt}" class="mr-3">
+                        ${opt}
+                    </label>
+                `).join('');
+
+                questionEl.innerHTML = `
+                    <p class="font-semibold mb-3 text-gray-100">${index + 1}. ${q.q}</p>
+                    <div class="space-y-2">${optionsHtml}</div>
+                `;
+                kuisContainer.appendChild(questionEl);
+            });
+            kuisSubmitButton.disabled = false;
+        }
+        
+        kuisSubmitButton.addEventListener('click', handleSubmitKuis);
+
+        async function handleSubmitKuis() {
+            let score = 0;
+            let allAnswered = true;
+            
+            questions.forEach((q, index) => {
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                if (!selected) {
+                    allAnswered = false;
+                } else if (selected.value === q.answer) {
+                    score++;
+                }
+            });
+
+            if (!allAnswered) {
+                showModal("Tunggu Dulu!", "Harap jawab semua pertanyaan sebelum mengirim.");
+                return;
+            }
+
+            kuisSubmitButton.disabled = true;
+            const finalScore = Math.round((score / questions.length) * 100);
+
+            // Simpan skor ke Firestore
+            if (currentUser) {
+                try {
+                    const userRef = doc(db, `artifacts/${appId}/public/data/belajar_algo_users`, currentUser.uid);
+                    await updateDoc(userRef, { quizScore: finalScore });
+                    console.log("Skor kuis disimpan.");
+                    showModal("Kuis Selesai!", `Skormu adalah: ${finalScore}. Hasilmu telah disimpan.`, 'alert');
+                    showPage('page-dashboard'); // Kembali ke dashboard
+                } catch (error) {
+                    console.error("Gagal simpan skor:", error);
+                    showModal("Error", "Gagal menyimpan skormu. Coba lagi.");
+                    kuisSubmitButton.disabled = false;
+                }
+            } else {
+                 showModal("Kuis Selesai!", `Skormu adalah: ${finalScore}. (Tidak tersimpan karena tidak login)`);
+            }
+        }
+
+
+        // --- 5. Logika Rapor Mini ---
+        
+        function startUserActivityListener() {
+            if (userActivityUnsubscribe) userActivityUnsubscribe(); // Hentikan listener lama
+
+            if (currentUser) {
+                const userRef = doc(db, `artifacts/${appId}/public/data/belajar_algo_users`, currentUser.uid);
+                userActivityUnsubscribe = onSnapshot(userRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        // Simpan level terbaru ke state global juga
+                        currentLightbotLevel = data.lightbotLevel || 0;
+                        // Perbarui data di rapor jika halaman rapor sedang dibuka
+                        if (!document.getElementById('page-rapor').classList.contains('hidden')) {
+                            updateRaporUI(data);
+                        }
+                    }
+                }, (error) => {
+                    console.error("Error listening to user data:", error);
+                });
+            }
+        }
+        
+        function loadRapor() {
+            // Data seharusnya sudah real-time dari onSnapshot
+            // Kita hanya perlu mengambil data terakhir yang diketahui
+            if (currentUser) {
+                updateRaporUI(currentUser); // Tampilkan data yang sudah ada dulu
+                
+                // Ambil data terbaru (jika listener belum sempat update)
+                const userRef = doc(db, `artifacts/${appId}/public/data/belajar_algo_users`, currentUser.uid);
+                getDoc(userRef).then(docSnap => {
+                    if (docSnap.exists()) {
+                        updateRaporUI(docSnap.data());
+                    }
+                });
+            }
+        }
+
+        function updateRaporUI(data) {
+            // Update juga currentUser state
+            currentUser = { ...currentUser, ...data }; 
+            
+            document.getElementById('rapor-nama').textContent = data.nama || 'Tidak ada';
+            document.getElementById('rapor-ttd-nama').textContent = `(${data.nama || '.....................'})`;
+            document.getElementById('rapor-kelas').textContent = data.kelas || 'Tidak ada';
+            document.getElementById('rapor-ttd-ortu').textContent = `(${data.namaOrtu || '.....................'})`;
+
+            // Sembunyikan paraf ortu jika perannya 'Guru'
+            const ortuParafContainer = document.getElementById('rapor-paraf-ortu-container');
+            if (data.peran === 'Guru') {
+                ortuParafContainer.classList.add('hidden');
+            } else {
+                ortuParafContainer.classList.remove('hidden');
+            }
+
+            document.getElementById('rapor-skor').textContent = (data.quizScore !== null) ? `${data.quizScore} / 100` : "Belum Mengerjakan";
+            document.getElementById('rapor-level').textContent = (data.lightbotLevel > 0) ? `Level ${data.lightbotLevel}` : "Belum Main";
+            
+            document.getElementById('rapor-feedback').textContent = data.feedback || "Belum ada feedback.";
+            document.getElementById('rapor-nilai').textContent = (data.nilai !== null) ? `${data.nilai}` : "--";
+        }
+
+        document.getElementById('print-rapor-button').addEventListener('click', () => {
+            window.print();
+        });
+
+
+        // --- 6. Logika Panel Guru ---
+        const studentSelect = document.getElementById('guru-student-select');
+        const studentDetails = document.getElementById('guru-student-details');
+        const userListContainer = document.getElementById('guru-user-list');
+
+        function loadGuruPanel() {
+            if (allUsersUnsubscribe) allUsersUnsubscribe(); // Hentikan listener lama
+
+            const usersRef = collection(db, `artifacts/${appId}/public/data/belajar_algo_users`);
+            const q = query(usersRef); // Kita ambil semua (Murid, Guru)
+
+            allUsersUnsubscribe = onSnapshot(q, (snapshot) => {
+                const allUsers = [];
+                snapshot.forEach((doc) => {
+                    allUsers.push(doc.data());
+                });
+
+                // Populate dropdown murid
+                studentSelect.innerHTML = '<option value="">-- Pilih Murid --</option>';
+                const students = allUsers.filter(u => u.peran === 'Murid');
+                // Urutkan berdasarkan kelas, lalu nama
+                students.sort((a, b) => {
+                    if (a.kelas < b.kelas) return -1;
+                    if (a.kelas > b.kelas) return 1;
+                    if (a.nama < b.nama) return -1;
+                    if (a.nama > b.nama) return 1;
+                    return 0;
+                });
+                
+                students.forEach(student => {
+                    const option = document.createElement('option');
+                    option.value = student.uid;
+                    option.textContent = `${student.kelas} - ${student.nama}`;
+                    studentSelect.appendChild(option);
+                });
+
+                // Populate daftar manajemen pengguna
+                userListContainer.innerHTML = '';
+                
+                const users = {
+                    murid: [],
+                    guru: []
+                };
+                
+                snapshot.forEach(doc => {
+                    const user = doc.data();
+                    if (user.peran === 'Murid') {
+                        users.murid.push(user);
+                    } else if (user.peran === 'Guru') {
+                        users.guru.push(user);
+                    }
+                });
+                
+                let html = '';
+
+                // Fungsi helper untuk generate baris
+                const generateUserRow = (user) => `
+                    <div class="flex justify-between items-center bg-gray-700 p-2 rounded">
+                        <div>
+                            <p class="font-semibold">${user.nama}</p>
+                            <p class="text-xs text-gray-400">${user.peran} | ${user.kelas}</p>
+                        </div>
+                        <button data-uid="${user.uid}" data-nama="${user.nama}" class="delete-user-button bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded">
+                            Hapus
+                        </button>
+                    </div>
+                `;
+
+                // Urutkan murid
+                users.murid.sort((a,b) => (a.nama > b.nama) ? 1 : -1);
+                if (users.murid.length > 0) {
+                    html += '<h4 class="text-lg font-semibold text-gray-400 mb-2">Murid</h4>';
+                    users.murid.forEach(user => {
+                        html += generateUserRow(user);
+                    });
+                }
+                
+                // Urutkan guru
+                users.guru.sort((a,b) => (a.nama > b.nama) ? 1 : -1);
+                if (users.guru.length > 0) {
+                    html += '<h4 class="text-lg font-semibold text-gray-400 mt-4 mb-2">Guru</h4>';
+                    users.guru.forEach(user => {
+                        html += generateUserRow(user);
+                    });
+                }
+                
+                userListContainer.innerHTML = html || '<p class="text-gray-500">Belum ada pengguna terdaftar.</p>';
+                
+                // Tambah listener ke tombol hapus
+                document.querySelectorAll('.delete-user-button').forEach(btn => {
+                    btn.addEventListener('click', handleDeleteUserClick);
+                });
+
+            }, (error) => {
+                console.error("Error loading all users:", error);
+                showModal("Error", "Gagal memuat data pengguna.");
+            });
+        }
+        
+        // Tampilkan detail murid saat dipilih
+        studentSelect.addEventListener('change', async (e) => {
+            const selectedUid = e.target.value;
+            if (!selectedUid) {
+                studentDetails.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const userRef = doc(db, `artifacts/${appId}/public/data/belajar_algo_users`, selectedUid);
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('detail-skor').textContent = (data.quizScore !== null) ? `${data.quizScore}` : "N/A";
+                    document.getElementById('detail-level').textContent = data.lightbotLevel || 0;
+                    document.getElementById('guru-feedback').value = data.feedback || "";
+                    document.getElementById('guru-nilai').value = data.nilai || "";
+                    document.getElementById('guru-submit-feedback').dataset.uid = selectedUid; // Simpan uid di tombol
+                    studentDetails.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Gagal ambil detail murid:", error);
+            }
+        });
+
+        // Simpan feedback/nilai
+        document.getElementById('guru-submit-feedback').addEventListener('click', async (e) => {
+            const selectedUid = e.target.dataset.uid;
+            const feedback = document.getElementById('guru-feedback').value;
+            const nilai = document.getElementById('guru-nilai').value;
+
+            if (!selectedUid) return;
+
+            try {
+                const userRef = doc(db, `artifacts/${appId}/public/data/belajar_algo_users`, selectedUid);
+                await updateDoc(userRef, {
+                    feedback: feedback,
+                    nilai: nilai ? parseInt(nilai) : null
+                });
+                showModal("Sukses", "Feedback dan nilai berhasil disimpan.");
+                studentDetails.classList.add('hidden');
+                studentSelect.value = "";
+            } catch (error) {
+                console.error("Gagal simpan feedback:", error);
+                showModal("Error", "Gagal menyimpan data.");
+            }
+        });
+
+        // Hapus pengguna
+        function handleDeleteUserClick(e) {
+            const uid = e.target.dataset.uid;
+            const nama = e.target.dataset.nama;
+            
+            if (uid === currentUser.uid) {
+                showModal("Aksi Dilarang", "Anda tidak dapat menghapus akun Anda sendiri.");
+                return;
+            }
+
+            showModal(
+                "Konfirmasi Hapus", 
+                `Apakah Anda yakin ingin menghapus semua data untuk pengguna "${nama}"? Aksi ini tidak dapat dibatalkan.`,
+                'confirm',
+                () => { // Ini adalah onConfirm callback
+                    deleteUser(uid);
+                }
+            );
+        }
+
+        async function deleteUser(uid) {
+            try {
+                const userRef = doc(db, `artifacts/${appId}/public/data/belajar_algo_users`, uid);
+                await deleteDoc(userRef);
+                showModal("Sukses", "Data pengguna telah dihapus.");
+                // Panel akan otomatis ter-update oleh listener onSnapshot
+            } catch (error) {
+                console.error("Gagal hapus pengguna:", error);
+                showModal("Error", "Gagal menghapus data pengguna.");
+            }
+        }
+
+        // --- Inisialisasi Aplikasi ---
+        if (!db) {
+            // Jika Firebase gagal inisialisasi, tampilkan error di login page
+            loginPage.innerHTML = `
+                <div class="w-full max-w-sm p-8 bg-gray-800 rounded-2xl shadow-xl text-center">
+                    <h1 class="text-3xl font-bold text-red-500 mb-4">Koneksi Gagal</h1>
+                    <p class="text-gray-300">Aplikasi tidak dapat terhubung ke database. Pastikan Anda memiliki koneksi internet dan coba muat ulang halaman.</p>
+                </div>
+            `;
+            showPage('login-page');
+        } else {
+            // Jika DB ada, mulai proses autentikasi
+            initializeAppAuth();
+        }
+        
+        // Fungsi untuk memulai autentikasi saat aplikasi dimuat
+        async function initializeAppAuth() {
+            if (!auth) {
+                console.error("Auth service not available for init.");
+                return;
+            }
+            try {
+                // Gunakan token jika ada (dari Canvas), jika tidak, login anonim
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    console.log("Signing in with custom token...");
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    console.log("Signing in anonymously...");
+                    await signInAnonymously(auth);
+                }
+                console.log("Initial auth complete.");
+            } catch (error) {
+                console.error("Error during initial sign-in:", error);
+                // Tampilkan error di login page jika GAGAL auth
+                loginPage.innerHTML = `
+                    <div class="w-full max-w-sm p-8 bg-gray-800 rounded-2xl shadow-xl text-center">
+                        <h1 class="text-3xl font-bold text-red-500 mb-4">Autentikasi Gagal</h1>
+                        <p class="text-gray-300">Gagal terhubung ke server autentikasi. Coba muat ulang halaman.</p>
+                    </div>
+                `;
+                showPage('login-page');
+            }
+        }
+        // Listener onAuthStateChanged akan menangani sisanya
+
+    </script>
+
+</body>
+</html>
+
+
